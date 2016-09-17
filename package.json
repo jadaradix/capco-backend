@@ -19,7 +19,10 @@
   "homepage": "https://github.com/jadaradix/capco-backend",
   "dependencies": {
     "babel-runtime": "^6.11.6",
+    "mondo-bank": "^0.1.11",
     "rally": "^2.0.0",
-    "restify": "^4.1.1"
+    "restify": "^4.1.1",
+    "lodash": "*",
+    "ueber": "jadaradix/ueber"
   }
 }
