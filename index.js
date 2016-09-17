@@ -1,6 +1,7 @@
 "use strict";
 
 const async = require("async");
+const ueber = require("ueber");
 const _ = require("lodash");
 const getFactors = require("./getFactors.js");
 
@@ -33,6 +34,7 @@ const MONDO_CLIENT_ID = process.env.MONDO_CLIENT_ID || "";
 const MONDO_CLIENT_SECRET = process.env.MONDO_CLIENT_SECRET || "";
 
 server.get("/:accessToken/profile", (request, resource, next) => {
+  console.log("XXX");
   let accessToken = request.params.accessToken;
   let name = request.query.name;
   async.waterfall([
@@ -45,7 +47,7 @@ server.get("/:accessToken/profile", (request, resource, next) => {
     (accountId, next) => {
       if (TEST_MODE === true) {
         return next(false, {
-          "transactions": _.sampleSize(testTransactions, 20)
+          "transactions": _.sampleSize(testTransactions, 100)
         });
       } else {
         return mondo.transactions(accountId, accessToken, next);
@@ -62,6 +64,7 @@ server.get("/:accessToken/profile", (request, resource, next) => {
     }
     let profile = {
       "name": name,
+      "id": `${accessToken}-${name}`,
       "accessToken": accessToken,
       "factors": factors
     }
@@ -71,9 +74,9 @@ server.get("/:accessToken/profile", (request, resource, next) => {
   });
 });
 
-server.get("/:accessToken/matches", (request, resource, next) => {
-  let accessToken = request.params.accessToken;
-  let profile = profiles.find(profile => (profile.accessToken === accessToken));
+server.get("/:accessTokenName/matches", (request, resource, next) => {
+  let accessTokenName = request.params.accessTokenName;
+  let profile = profiles.find(profile => (profile.id === accessTokenName));
   if (!profile) {
     resource.status(500);
     resource.send(`No profile found - you are cheating`);
@@ -81,9 +84,19 @@ server.get("/:accessToken/matches", (request, resource, next) => {
   }
   let matches = profiles.filter(potentialMatch => {
     // matching with yourself is creepy
-    if (potentialMatch.accessToken === accessToken) return false;
-    return true;
+    return (potentialMatch.id !== accessTokenName);
   });
+  matches = matches.map(eachProfile => {
+    let lowestFactorDiff = 100000;
+    profile.factors.forEach(profileFactor => {
+      let x = Math.abs(profileFactor.percent - eachProfile.factors.find(factor => (factor.name === profileFactor.name)).percent)
+      if (x < lowestFactorDiff) lowestFactorDiff = x;
+    });
+    return Object.assign(eachProfile, {
+      "strength": Math.random()
+    });
+  });
+  matches = ueber.sortByKey(matches, "strength");
   resource.send(matches);
   return next();
 });

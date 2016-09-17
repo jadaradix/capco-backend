@@ -57,9 +57,24 @@ const factors = {
 
   "planner": (categories) => {
 
-    let r = 0;
+    let sum1 = 
+      (categories.find(category => (category.name === "holiday")) || noSpend).spend
+      -
+      (categories.find(category => (category.name === "bills")) || noSpend).spend
+
+    let sum2 = 
+      (categories.find(category => (category.name === "holiday")) || noSpend).spend;
+
+    let r;
+    if (sum2 === 0) {
+      r = 0;
+    } else {
+      r = (sum1 - sum2) / sum2;
+    }
+    if (r < 0) r = 0;
+
     return {
-      "name": "planner",
+      "name": "Planner",
       "percent": Math.floor(r * 100)
     };
 
